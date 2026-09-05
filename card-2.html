@@ -46,13 +46,14 @@
     background:transparent;
     color:var(--cream);
     font-family:'Poppins', sans-serif;
-    font-size:11px;
-    letter-spacing:0.14em;
+    font-size:10.5px;
+    letter-spacing:0.12em;
     text-transform:uppercase;
-    padding:9px 18px;
+    padding:9px 14px;
     border-radius:999px;
     cursor:pointer;
     transition:background 0.25s ease, color 0.25s ease;
+    white-space:nowrap;
   }
   .switcher button.active{
     background:var(--bronze);
@@ -301,27 +302,28 @@
 
 <div class="stage">
 
-  <div class="view-toggle">
-    <button id="btn-view-card" class="active" onclick="showView('card')">Card</button>
-    <button id="btn-view-why" onclick="showView('why')">Why Us</button>
+  <div class="switcher">
+    <button id="btn-nick" class="active" onclick="selectTab('nick')">Nick</button>
+    <button id="btn-william" onclick="selectTab('william')">William</button>
+    <button id="btn-why" onclick="selectTab('why')">Why Us</button>
   </div>
 
   <div class="card">
     <div class="card-top">
       <div class="stakes" id="stakes"></div>
-      <p class="name" id="p-name">William Wright</p>
-      <p class="role" id="p-role">Property Care &amp; Revenue Management</p>
+      <p class="name" id="p-name">Nick Rhodes</p>
+      <p class="role" id="p-role">Owner Relations &amp; Guest Experience</p>
     </div>
 
     <div id="view-card" class="view-block">
     <div class="card-body">
-      <a class="row" id="row-phone" href="tel:+18479974733">
+      <a class="row" id="row-phone" href="tel:+19193068687">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        <span class="txt"><span class="label">Phone</span><span id="p-phone">847.997.4733</span></span>
+        <span class="txt"><span class="label">Phone</span><span id="p-phone">919.306.8687</span></span>
       </a>
-      <a class="row" id="row-email" href="mailto:william@thetenmilecollective.com">
+      <a class="row" id="row-email" href="mailto:nick@thetenmilecollective.com">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z" stroke="none"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
-        <span class="txt"><span class="label">Email</span><span id="p-email">william@thetenmilecollective.com</span></span>
+        <span class="txt"><span class="label">Email</span><span id="p-email">nick@thetenmilecollective.com</span></span>
       </a>
       <a class="row" href="https://thetenmilecollective.com" target="_blank">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>
@@ -2662,11 +2664,11 @@ var qrcode = function() {
 <script>
   const people = {
     nick: {
-      name: "William Wright",
-      role: "Property Care &amp; Revenue Management",
-      phone: "847.997.4733",
-      phoneHref: "tel:+18479974733",
-      email: "william@thetenmilecollective.com"
+      name: "Nick Rhodes",
+      role: "Owner Relations &amp; Guest Experience",
+      phone: "919.306.8687",
+      phoneHref: "tel:+19193068687",
+      email: "nick@thetenmilecollective.com"
     },
     william: {
       name: "William Wright",
@@ -2739,8 +2741,6 @@ END:VCARD`;
     document.getElementById('row-phone').href = p.phoneHref;
     document.getElementById('row-email').href = 'mailto:' + p.email;
 
-    // single-person card: no switcher buttons to update
-
     renderQR(key);
   }
 
@@ -2760,13 +2760,24 @@ END:VCARD`;
   function showView(view){
     document.getElementById('view-card').style.display = (view === 'card') ? '' : 'none';
     document.getElementById('view-why').classList.toggle('active', view === 'why');
-    document.getElementById('btn-view-card').classList.toggle('active', view === 'card');
-    document.getElementById('btn-view-why').classList.toggle('active', view === 'why');
+  }
+
+  function selectTab(tab){
+    document.getElementById('btn-nick').classList.toggle('active', tab === 'nick');
+    document.getElementById('btn-william').classList.toggle('active', tab === 'william');
+    document.getElementById('btn-why').classList.toggle('active', tab === 'why');
+
+    if(tab === 'why'){
+      showView('why');
+    } else {
+      showPerson(tab);
+      showView('card');
+    }
   }
 
   buildStakeMark('stakes', 32, '1.6px');
   buildStakeMark('footer-stakes', 32, '1.6px');
-  showPerson('william');
+  selectTab('nick');
 </script>
 
 </body>
