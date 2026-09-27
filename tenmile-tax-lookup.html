@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tenmile Tax &amp; Fee Lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --navy: #2E3841;
+    --navy-deep: #212930;
+    --bronze: #B9AC99;
+    --bronze-deep: #8f8064;
+    --off-white: #FAFAFA;
+    --paper: #FFFFFF;
+    --ink: #2A302F;
+    --ink-soft: #5C645F;
+    --line: #E4E1D8;
+    --confirmed: #5C7A5E;
+    --confirmed-bg: #EEF3EC;
+    --likely: #A87B2E;
+    --likely-bg: #FBF1E1;
+    --unverified: #A24A3F;
+    --unverified-bg: #FBEDE9;
+
+    --bg: var(--off-white);
+    --surface: var(--paper);
+    --text: var(--ink);
+    --text-soft: var(--ink-soft);
+    --border: var(--line);
+  }
+
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1B211F;
+      --surface: #232A28;
+      --text: #EFEDE7;
+      --text-soft: #B7BDB8;
+      --border: #384038;
+      --confirmed-bg: #22301F;
+      --likely-bg: #332711;
+      --unverified-bg: #331F1B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1B211F;
+    --surface: #232A28;
+    --text: #EFEDE7;
+    --text-soft: #B7BDB8;
+    --border: #384038;
+    --confirmed-bg: #22301F;
+    --likely-bg: #332711;
+    --unverified-bg: #331F1B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 36px 20px 64px;
+  }
+
+  header.page {
+    margin-bottom: 28px;
+  }
+
+  .kicker {
+    font-size: 12.5px;
+    color: var(--text-soft);
+    margin: 0 0 6px;
+    letter-spacing: 0.02em;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600;
+    font-size: 34px;
+    line-height: 1.1;
+    margin: 0 0 10px;
+    color: var(--navy);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) h1 { color: var(--bronze); }
+  }
+  :root[data-theme="dark"] h1 { color: var(--bronze); }
+
+  .lede {
+    color: var(--text-soft);
+    max-width: 54ch;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  input[type="text"], select {
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    padding: 11px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+  }
+  input[type="text"]:focus, select:focus {
+    outline: 2px solid var(--bronze-deep);
+    outline-offset: 1px;
+  }
+
+  .hint {
+    font-size: 12.5px;
+    color: var(--text-soft);
+    margin-top: 6px;
+  }
+
+  .match-note {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    font-size: 13.5px;
+    display: none;
+  }
+  .match-note.show { display: block; }
+  .match-note.found { background: var(--confirmed-bg); color: var(--confirmed); }
+  .match-note.none { background: var(--unverified-bg); color: var(--unverified); }
+
+  .match-note button {
+    margin-left: 4px;
+    border: none;
+    background: none;
+    text-decoration: underline;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  /* Results */
+  #results { display: none; }
+  #results.show { display: block; }
+
+  .result-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+
+  .result-head h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600;
+    font-size: 24px;
+    margin: 0;
+    color: var(--navy);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .result-head h2 { color: var(--bronze); }
+  }
+  :root[data-theme="dark"] .result-head h2 { color: var(--bronze); }
+
+  .badge {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge.confirmed { background: var(--confirmed-bg); color: var(--confirmed); }
+  .badge.likely { background: var(--likely-bg); color: var(--likely); }
+  .badge.unverified { background: var(--unverified-bg); color: var(--unverified); }
+
+  .total-rate {
+    margin: 14px 0 18px;
+    padding: 16px 18px;
+    background: var(--navy);
+    border-radius: 8px;
+    color: var(--off-white);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .total-rate .num {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--bronze);
+  }
+  .total-rate .label {
+    font-size: 13px;
+    color: #D9D4C8;
+  }
+
+  table.breakdown {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-bottom: 18px;
+  }
+  table.breakdown th {
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: none;
+    color: var(--text-soft);
+    font-weight: 600;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.breakdown td {
+    padding: 8px 8px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.breakdown td.rate { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.breakdown tr:last-child td { border-bottom: none; font-weight: 600; }
+
+  .subhead {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: none;
+    color: var(--text-soft);
+    margin: 20px 0 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .subhead:first-of-type { border-top: none; padding-top: 0; margin-top: 4px; }
+
+  ul.plain { margin: 0; padding: 0; list-style: none; }
+  ul.plain li {
+    padding: 6px 0 6px 16px;
+    position: relative;
+    font-size: 13.5px;
+  }
+  ul.plain li::before {
+    content: "\2014";
+    position: absolute;
+    left: 0;
+    color: var(--text-soft);
+  }
+
+  .note {
+    font-size: 12.5px;
+    color: var(--text-soft);
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Portfolio quick reference */
+  .portfolio-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .portfolio-table th {
+    text-align: left;
+    font-size: 11px;
+    color: var(--text-soft);
+    font-weight: 600;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .portfolio-table td {
+    padding: 8px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .portfolio-table tr:last-child td { border-bottom: none; }
+
+  footer.page {
+    margin-top: 30px;
+    font-size: 12px;
+    color: var(--text-soft);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <p class="kicker">The Tenmile Collective — internal ops tool</p>
+    <h1>Tax &amp; fee lookup</h1>
+    <p class="lede">Enter an address or pick a jurisdiction to see the full tax stack, license and filing requirements, and how to set it up correctly in Hostaway.</p>
+  </header>
+
+  <div class="panel">
+    <div class="field">
+      <label for="addr">Property address (optional)</label>
+      <input type="text" id="addr" placeholder="e.g. 419 S French St, Breckenridge">
+      <div class="hint">Matches against streets in Tenmile's confirmed portfolio and comps research. This is a convenience only — always confirm jurisdiction with Town of Breckenridge GIS or the Summit County Assessor before filing.</div>
+      <div id="matchNote" class="match-note"></div>
+    </div>
+    <div class="field">
+      <label for="jur">Jurisdiction</label>
+      <select id="jur">
+        <option value="">Select a jurisdiction…</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="results" class="panel"></div>
+
+  <div class="panel">
+    <div class="subhead" style="margin-top:0;padding-top:0;border-top:none;">Current portfolio, for reference</div>
+    <table class="portfolio-table">
+      <thead><tr><th>Property</th><th>Jurisdiction</th><th>Status</th></tr></thead>
+      <tbody id="portfolioBody"></tbody>
+    </table>
+  </div>
+
+  <footer class="page">
+    <strong>Keeping this current:</strong> reverify all jurisdictions each January (most Colorado town/county rate changes take effect Jan 1 — a standing reminder is set for Jan 5). Reverify a specific jurisdiction any time before onboarding a new property there, or before a filing deadline. Unincorporated Summit County is the one to watch first — Colorado's 2025 law lets counties raise the lodging tax ceiling from 2% to 6% by voter approval. This tool is a working reference, not a filing system.
+  </footer>
+
+</div>
+
+<script>
+const JURISDICTIONS = {
+  breck: {
+    name: "Town of Breckenridge",
+    confidence: "confirmed",
+    verified: "Sep 27, 2026",
+    total: 12.275,
+    breakdown: [
+      { label: "Colorado state sales tax", rate: 2.9, to: "Colorado DOR" },
+      { label: "Summit County sales tax", rate: 2.0, to: "Colorado DOR" },
+      { label: "Summit Stage (mass transit)", rate: 0.75, to: "Colorado DOR" },
+      { label: "Summit Combined Housing Authority", rate: 0.725, to: "Colorado DOR" },
+      { label: "Town of Breckenridge sales tax", rate: 2.5, to: "Town of Breckenridge" },
+      { label: "Town Public Accommodation Tax", rate: 3.4, to: "Town of Breckenridge" },
+    ],
+    license: [
+      "Town of Breckenridge Accommodation Unit License (attaches to the owner, non-transferable on sale)",
+      "Colorado Sales Tax License (state)"
+    ],
+    filing: [
+      "Town portion (5.9%: sales tax + Public Accommodation Tax) — filed via MuniRevs or Xpress Bill Pay to the Town",
+      "State-administered portion (6.375%: state, county, Summit Stage, SCHA) — filed via Colorado DOR / SUTS",
+      "Filing frequency (monthly or quarterly) is assigned by the Town after license approval"
+    ],
+    hostaway: [
+      "Airbnb-sourced bookings: Airbnb already collects Town PAT + sales tax at checkout — mark as channel-collected, don't apply Tenmile's rate on top",
+      "VRBO-sourced bookings: confirm VRBO's collection status per listing before assuming it's handled — historically inconsistent for Summit County",
+      "Direct/Stripe bookings: apply the full 12.275% as Tenmile's own tax rate"
+    ],
+    note: "Confirmed via townofbreckenridge.com (Accommodations Tax, Sales and Accommodation Tax, Tax Rates and Revenue Distributions pages)."
+  },
+  county: {
+    name: "Unincorporated Summit County",
+    confidence: "confirmed",
+    verified: "Sep 27, 2026",
+    watch: "Colorado's 2025 law lets counties raise the lodging tax ceiling from 2% to 6% by voter approval. This is the rate most likely to move without notice \u2014 check for a ballot measure before assuming 8.375% still holds.",
+    total: 8.375,
+    breakdown: [
+      { label: "Colorado state sales tax", rate: 2.9, to: "Colorado DOR" },
+      { label: "Summit County sales tax", rate: 2.0, to: "Colorado DOR" },
+      { label: "Summit Stage (mass transit)", rate: 0.75, to: "Colorado DOR" },
+      { label: "Summit Combined Housing Authority", rate: 0.725, to: "Colorado DOR" },
+      { label: "Summit County STR Lodging Excise Tax", rate: 2.0, to: "Confirm — county or DOR" },
+    ],
+    license: [
+      "Summit County Short-Term Rental license (Host Compliance Portal, str@summitcountyco.gov)"
+    ],
+    filing: [
+      "State, county, transit, and SCHA portions (6.375%) — Colorado DOR / SUTS",
+      "2% county STR lodging excise tax — confirm remittance path directly with Summit County before first filing; some county lodging taxes route through the state system, others are collected by the county directly"
+    ],
+    hostaway: [
+      "Airbnb-sourced bookings: Airbnb collects Colorado state/county lodging taxes automatically in most cases — verify per listing, mark channel-collected if so",
+      "VRBO-sourced bookings: does not universally collect for unincorporated Summit County — verify before assuming coverage",
+      "Direct/Stripe bookings: apply the full 8.375% as Tenmile's own tax rate"
+    ],
+    note: "Confirmed via Town of Keystone lodging tax page (breaks out the shared state/county stack) and Summit County 2022 ballot resolution for the 2% STR lodging excise tax."
+  },
+  keystone: {
+    name: "Town of Keystone",
+    confidence: "confirmed",
+    verified: "Sep 27, 2026",
+    total: 8.375,
+    breakdown: [
+      { label: "Colorado state sales tax", rate: 2.9, to: "Colorado DOR" },
+      { label: "Summit County sales tax", rate: 2.0, to: "Colorado DOR" },
+      { label: "Summit Stage (mass transit)", rate: 0.75, to: "Colorado DOR" },
+      { label: "Summit Combined Housing Authority", rate: 0.725, to: "Colorado DOR" },
+      { label: "Town of Keystone lodging tax", rate: 2.0, to: "Town of Keystone" },
+    ],
+    license: [
+      "Town of Keystone short-term rental registration",
+      "Colorado Sales Tax License (state)"
+    ],
+    filing: [
+      "State-administered portion (6.375%) — Colorado DOR / SUTS",
+      "2% Town lodging tax — Town of Keystone, via the Caselle Community Portal"
+    ],
+    hostaway: [
+      "Airbnb-sourced bookings: verify collection status per listing, mark channel-collected if covered",
+      "VRBO-sourced bookings: verify before assuming coverage",
+      "Direct/Stripe bookings: apply the full 8.375% as Tenmile's own tax rate"
+    ],
+    note: "Confirmed via keystoneco.gov Lodging Tax Information page. This tax replaced the old 2% county lodging tax for Keystone addresses effective Jan 1, 2025."
+  },
+  frisco: {
+    name: "Town of Frisco",
+    confidence: "confirmed",
+    verified: "Sep 27, 2026",
+    total: 15.725,
+    breakdown: [
+      { label: "Colorado state sales tax", rate: 2.9, to: "Colorado DOR" },
+      { label: "Summit County sales tax", rate: 2.0, to: "Colorado DOR" },
+      { label: "Summit Stage (mass transit)", rate: 0.75, to: "Colorado DOR" },
+      { label: "Summit Combined Housing Authority", rate: 0.725, to: "Colorado DOR" },
+      { label: "Town of Frisco sales tax", rate: 2.0, to: "Town of Frisco" },
+      { label: "Town of Frisco lodging tax", rate: 2.35, to: "Town of Frisco" },
+      { label: "Town STR excise tax (workforce housing)", rate: 5.0, to: "Town of Frisco" },
+    ],
+    license: [
+      "Town of Frisco Business License + Short-Term Rental License (non-transferable, expires annually April 30, waitlist may apply)",
+      "Colorado Sales Tax License (state)"
+    ],
+    filing: [
+      "Town portion (9.35%: sales + lodging + STR excise) — filed monthly via Town of Frisco's Xpress Bill Pay portal, due by the 20th of the following month",
+      "State-administered portion (6.375%) — Colorado DOR / SUTS, Frisco jurisdiction code 610007"
+    ],
+    hostaway: [
+      "Airbnb-sourced bookings: Airbnb has collected and remitted Frisco's Town taxes since Feb 1, 2023 \u2014 mark as channel-collected",
+      "VRBO-sourced bookings: VRBO has collected and remitted Frisco's Town taxes since May 1, 2021 \u2014 mark as channel-collected",
+      "Direct/Stripe bookings: apply the full 15.725% as Tenmile's own tax rate; file an annual direct-bookings-only STR return by Jan 20 of the following year, in addition to the monthly combined filings"
+    ],
+    note: "Fully confirmed via friscogov.com (Short-Term Rental Taxes & Payments, Sales & Lodging Tax pages) and the Town's STR tax return instructions, Sept 2026."
+  },
+  dillon: {
+    name: "Town of Dillon",
+    confidence: "likely",
+    verified: "Sep 27, 2026 (partial \u2014 lodging tax only)",
+    total: null,
+    breakdown: [
+      { label: "Town of Dillon lodging tax", rate: 11.0, to: "Town of Dillon" },
+      { label: "State/county/transit/SCHA stack", rate: null, to: "Colorado DOR \u2014 confirm exact rate" },
+    ],
+    license: [
+      "Town of Dillon Short-Term Rental License (non-transferable, expires annually May 31)"
+    ],
+    filing: [
+      "11% Town lodging tax \u2014 remitted to the Town of Dillon",
+      "State-administered stack \u2014 confirm exact county/transit/SCHA applicability with Colorado DOR before filing"
+    ],
+    hostaway: [
+      "Do not set a Hostaway tax rule until the Town sales tax rate (if any, separate from the 11% lodging tax) is confirmed \u2014 the 11% figure alone is not the full stack"
+    ],
+    note: "Partially confirmed: 11% Town of Dillon lodging tax is documented. Town sales tax rate and full stack not yet itemized in Tenmile's research \u2014 confirm with the Town before onboarding a Dillon property."
+  },
+  silverthorne: {
+    name: "Town of Silverthorne",
+    confidence: "unverified",
+    total: null,
+    breakdown: [],
+    license: ["Not yet researched — contact Town of Silverthorne finance department before onboarding a property here"],
+    filing: ["Not yet researched"],
+    hostaway: ["Do not set a Hostaway tax rule until the rate is confirmed"],
+    note: "No Tenmile research on file for this jurisdiction yet."
+  },
+  blueriver: {
+    name: "Town of Blue River",
+    confidence: "unverified",
+    total: null,
+    breakdown: [],
+    license: ["Not yet researched — contact Town of Blue River before onboarding a property here"],
+    filing: ["Not yet researched"],
+    hostaway: ["Do not set a Hostaway tax rule until the rate is confirmed"],
+    note: "No Tenmile research on file for this jurisdiction yet."
+  },
+  copper: {
+    name: "Copper Mountain",
+    confidence: "unverified",
+    total: null,
+    breakdown: [],
+    license: ["Not yet researched — Copper Mountain sits in unincorporated Summit County but confirm any resort-specific district tax before onboarding"],
+    filing: ["Not yet researched"],
+    hostaway: ["Do not set a Hostaway tax rule until the rate is confirmed"],
+    note: "No Tenmile research on file for this jurisdiction yet. May follow the unincorporated Summit County stack plus a resort special district — confirm."
+  }
+};
+
+// Known streets from Tenmile's portfolio and comps research, for address-match convenience only.
+const STREET_HINTS = [
+  { pattern: "french st", jur: "breck", confidence: "confirmed", why: "Fox Den and Abbett Placer are both on S French St, Historic District" },
+  { pattern: "highlands dr", jur: "breck", confidence: "likely", why: "Highlands Dr parcels are commonly listed \u201cin town limits\u201d in MLS data, but not individually confirmed" },
+  { pattern: "penn lode", jur: "breck", confidence: "likely", why: "Shock Hill subdivision, gondola-adjacent" },
+  { pattern: "regent dr", jur: "breck", confidence: "likely", why: "Within Shock Hill" },
+  { pattern: "cucumber creek", jur: "breck", confidence: "likely", why: "Near gondola mid-station" },
+  { pattern: "union trail", jur: "breck", confidence: "likely", why: "Shock Hill Landing, gondola station on site" },
+  { pattern: "ski hill", jur: "breck", confidence: "confirmed", why: "Peak 8 base area, One Ski Hill Escape 8308 is a confirmed Tenmile property" },
+  { pattern: "main street", jur: "breck", confidence: "likely", why: "Downtown Breckenridge" },
+  { pattern: "boreas pass", jur: "county", confidence: "unverified", why: "Extends outside town toward historic Boreas Pass \u2014 boundary unconfirmed" },
+];
+
+function populateSelect() {
+  const sel = document.getElementById('jur');
+  Object.entries(JURISDICTIONS).forEach(([key, j]) => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = j.name;
+    sel.appendChild(opt);
+  });
+}
+
+function badgeHtml(confidence) {
+  const labels = { confirmed: "Confirmed", likely: "Likely \u2014 verify", unverified: "Unverified" };
+  return `<span class="badge ${confidence}">${labels[confidence] || confidence}</span>`;
+}
+
+function renderResults(key) {
+  const results = document.getElementById('results');
+  const j = JURISDICTIONS[key];
+  if (!j) { results.classList.remove('show'); results.innerHTML = ''; return; }
+
+  let html = `<div class="result-head"><h2>${j.name}</h2>${badgeHtml(j.confidence)}</div>`;
+  html += `<div class="hint" style="margin-bottom:14px;">Last verified: ${j.verified || "not recorded"}</div>`;
+
+  if (j.watch) {
+    html += `<div class="match-note show none" style="margin-bottom:14px;">\u26a0 ${j.watch}</div>`;
+  }
+
+  if (j.total !== null) {
+    html += `<div class="total-rate"><span class="label">Total effective rate on a short-term stay</span><span class="num">${j.total}%</span></div>`;
+  } else {
+    html += `<div class="total-rate"><span class="label">Rate not yet confirmed</span><span class="num">\u2014</span></div>`;
+  }
+
+  if (j.breakdown.length) {
+    html += `<table class="breakdown"><thead><tr><th>Line item</th><th>Remitted to</th><th class="rate">Rate</th></tr></thead><tbody>`;
+    j.breakdown.forEach(row => {
+      const rateText = row.rate === null ? "\u2014" : `${row.rate}%`;
+      html += `<tr><td>${row.label}</td><td>${row.to}</td><td class="rate">${rateText}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  html += `<div class="subhead">License required</div><ul class="plain">${j.license.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  html += `<div class="subhead">Filing &amp; remittance</div><ul class="plain">${j.filing.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  html += `<div class="subhead">Hostaway setup</div><ul class="plain">${j.hostaway.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  html += `<div class="note">${j.note}</div>`;
+
+  results.innerHTML = html;
+  results.classList.add('show');
+}
+
+function tryMatchAddress(value) {
+  const note = document.getElementById('matchNote');
+  const v = value.trim().toLowerCase();
+  if (!v) { note.classList.remove('show'); return; }
+
+  const hit = STREET_HINTS.find(h => v.includes(h.pattern));
+  if (hit) {
+    const j = JURISDICTIONS[hit.jur];
+    note.className = 'match-note show found';
+    note.innerHTML = `Matched to a known street \u2014 suggesting <strong>${j.name}</strong> (${hit.confidence}). ${hit.why}. <button type="button" id="applyMatch">Use this</button>`;
+    document.getElementById('applyMatch').onclick = () => {
+      document.getElementById('jur').value = hit.jur;
+      renderResults(hit.jur);
+    };
+  } else {
+    note.className = 'match-note show none';
+    note.innerHTML = `No match against known Tenmile streets. Select the jurisdiction manually below, and confirm the boundary via Town of Breckenridge GIS or the Summit County Assessor before filing.`;
+  }
+}
+
+function renderPortfolio() {
+  const rows = [
+    { name: "Fox Den (419 S French St)", jur: "breck", conf: "confirmed" },
+    { name: "Abbett Placer (205 S French St)", jur: "breck", conf: "confirmed" },
+    { name: "One Ski Hill Escape 8308", jur: "breck", conf: "confirmed" },
+    { name: "2501 Highlands Dr", jur: "breck", conf: "likely" },
+  ];
+  const body = document.getElementById('portfolioBody');
+  body.innerHTML = rows.map(r => {
+    const j = JURISDICTIONS[r.jur];
+    return `<tr><td>${r.name}</td><td>${j.name}</td><td>${badgeHtml(r.conf)}</td></tr>`;
+  }).join('');
+}
+
+populateSelect();
+renderPortfolio();
+
+document.getElementById('addr').addEventListener('input', (e) => tryMatchAddress(e.target.value));
+document.getElementById('jur').addEventListener('change', (e) => renderResults(e.target.value));
+</script>
+</body>
+</html>
